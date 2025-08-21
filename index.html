@@ -20,6 +20,8 @@
             --text: #ccd6f6;
             --text-secondary: #8892b0;
             --transition-speed: 0.5s;
+            --tour-highlight: #ffd700;
+            --tour-overlay: rgba(0, 0, 0, 0.85);
         }
         
         * {
@@ -35,8 +37,357 @@
             overflow-x: hidden;
             cursor: none;
         }
-        
-        /* Custom Cursor */
+
+        /* Tour System Styles - Fixed for Better Visibility */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .tour-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .tour-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--tour-overlay);
+            mask: radial-gradient(circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), transparent var(--spotlight-size, 100px), black calc(var(--spotlight-size, 100px) + 50px));
+            -webkit-mask: radial-gradient(circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), transparent var(--spotlight-size, 100px), black calc(var(--spotlight-size, 100px) + 50px));
+            transition: all 0.5s ease;
+        }
+
+        .tour-spotlight {
+            position: absolute;
+            border-radius: 50%;
+            transition: all 0.5s ease;
+            pointer-events: none;
+            border: 3px solid var(--tour-highlight);
+            background: transparent;
+            animation: spotlightPulse 2s ease-in-out infinite;
+            box-shadow: 
+                0 0 0 3px rgba(255, 215, 0, 0.3),
+                0 0 30px var(--tour-highlight),
+                inset 0 0 0 3px rgba(255, 215, 0, 0.2);
+        }
+
+        @keyframes spotlightPulse {
+            0%, 100% { 
+                border-color: var(--tour-highlight);
+                box-shadow: 
+                    0 0 0 3px rgba(255, 215, 0, 0.3),
+                    0 0 30px var(--tour-highlight),
+                    inset 0 0 0 3px rgba(255, 215, 0, 0.2);
+            }
+            50% { 
+                border-color: #fff;
+                box-shadow: 
+                    0 0 0 5px rgba(255, 255, 255, 0.4),
+                    0 0 50px #fff,
+                    inset 0 0 0 5px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        .tour-tooltip {
+            position: fixed;
+            max-width: 350px;
+            background: linear-gradient(135deg, var(--secondary), #1e3a5f);
+            border: 2px solid var(--tour-highlight);
+            border-radius: 15px;
+            padding: 25px;
+            color: var(--text);
+            z-index: 10001;
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 30px rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .tour-tooltip.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .tour-tooltip::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        .tour-tooltip.bottom::before {
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent var(--tour-highlight) transparent;
+        }
+
+        .tour-tooltip.top::before {
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0 10px;
+            border-color: var(--tour-highlight) transparent transparent transparent;
+        }
+
+        .tour-tooltip.left::before {
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent var(--tour-highlight);
+        }
+
+        .tour-tooltip.right::before {
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 10px 10px 10px 0;
+            border-color: transparent var(--tour-highlight) transparent transparent;
+        }
+
+        .tour-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .tour-step-indicator {
+            background: var(--tour-highlight);
+            color: var(--primary);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            animation: stepIndicatorGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes stepIndicatorGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        }
+
+        .tour-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tour-highlight);
+            margin: 0;
+        }
+
+        .tour-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .tour-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tour-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tour-btn-primary {
+            background: linear-gradient(135deg, var(--tour-highlight), #ffa500);
+            color: var(--primary);
+        }
+
+        .tour-btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .tour-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .tour-progress {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tour-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .tour-dot.active {
+            background: var(--tour-highlight);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .tour-welcome {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, var(--secondary), #1e3a5f);
+            border: 2px solid var(--tour-highlight);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            z-index: 10002;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.4),
+                0 0 50px rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(15px);
+        }
+
+        .tour-welcome.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .tour-welcome-icon {
+            font-size: 60px;
+            color: var(--tour-highlight);
+            margin-bottom: 20px;
+            animation: welcomeIconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes welcomeIconFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .tour-welcome h2 {
+            color: var(--tour-highlight);
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .tour-welcome p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .tour-start-btn, .tour-skip-btn {
+            background: linear-gradient(135deg, var(--tour-highlight), #ffa500);
+            color: var(--primary);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+        }
+
+        .tour-skip-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .tour-trigger {
+            position: fixed;
+            top: 30px;      /* NEW: Move to top */
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--tour-highlight), #ffa500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+            animation: tourTriggerPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes tourTriggerPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 0 15px 35px rgba(255, 215, 0, 0.5);
+            }
+        }
+
+        /* Enhanced highlight effects for tour targets */
+        .tour-highlight-element {
+            position: relative;
+            z-index: 10001 !important;
+        }
+
+        .tour-highlight-element::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border: 3px solid var(--tour-highlight);
+            border-radius: 10px;
+            pointer-events: none;
+            animation: highlightGlow 2s ease-in-out infinite;
+            z-index: 10001;
+        }
+
+        @keyframes highlightGlow {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+                opacity: 0.8;
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+                opacity: 1;
+            }
+        }
+
+        /* Custom Cursor - Modified for Tour */
         .cursor {
             position: fixed;
             width: 20px;
@@ -48,6 +399,13 @@
             z-index: 9999;
             transform: translate(-50%, -50%);
             transition: transform 0.1s ease;
+        }
+
+        .tour-overlay.active .cursor {
+            z-index: 10002;
+            background-color: rgba(255, 215, 0, 0.8);
+            mix-blend-mode: normal;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
         }
         
         .cursor-follower {
@@ -61,6 +419,12 @@
             opacity: 0.5;
             transform: translate(-50%, -50%);
             transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+        }
+
+        .tour-overlay.active .cursor-follower {
+            z-index: 10001;
+            border-color: var(--tour-highlight);
+            opacity: 0.8;
         }
         
         /* Loader */
@@ -276,6 +640,11 @@
             transition-delay: 0.5s;
         }
         
+        .ring-nav-item:nth-child(6) {
+            transform: translate(-100px, 0);
+            transition-delay: 0.6s;
+        }
+        
         .ring-nav.active .ring-nav-item:nth-child(1) {
             transform: translate(-80px, -80px);
         }
@@ -294,6 +663,10 @@
         
         .ring-nav.active .ring-nav-item:nth-child(5) {
             transform: translate(80px, 80px);
+        }
+        
+        .ring-nav.active .ring-nav-item:nth-child(6) {
+            transform: translate(-100px, 0);
         }
         
         .ring-nav-tooltip {
@@ -377,11 +750,16 @@
             opacity: 0;
             transform: translateY(20px);
             animation: fadeInUp 0.5s forwards 0.5s;
+            color: var(--text);
             background: linear-gradient(to right, var(--text), var(--highlight));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            position: relative;
+            z-index: 10;
         }
-        
+                
         .home h3 {
             font-size: 50px;
             color: var(--text-secondary);
@@ -499,7 +877,7 @@
             transform: translateY(-5px);
         }
         
-        /* About Page */
+        /* Section Title */
         .section-title {
             font-size: 32px;
             margin-bottom: 50px;
@@ -543,6 +921,7 @@
             content: '\f0e0'; /* envelope icon */
         }
         
+        /* About Page */
         .about-container {
             display: flex;
             gap: 50px;
@@ -695,7 +1074,7 @@
         .tabs {
             display: flex;
             flex-direction: column;
-            min-width: 200px;
+            min-width: 250px;
             border-left: 2px solid var(--secondary);
             transform: rotateY(20deg);
             transform-origin: left;
@@ -923,7 +1302,7 @@
             font-size: 50px;
             margin-bottom: 20px;
             background: linear-gradient(to right, var(--text), var(--highlight));
-            -webkit-background-clip: text;
+            --webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
@@ -1083,6 +1462,11 @@
                 right: 20px;
             }
             
+            .tour-trigger {
+                bottom: 90px;
+                right: 20px;
+            }
+            
             .home h2 {
                 font-size: 40px;
             }
@@ -1109,6 +1493,7 @@
                 border-left: none;
                 border-bottom: 2px solid var(--secondary);
                 transform: none;
+                min-width: 100%;
             }
             
             .tab-button.active::before {
@@ -1130,6 +1515,48 @@
             .section-title::after {
                 width: 100px;
             }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tour-tooltip {
+                max-width: 300px;
+                padding: 20px;
+            }
+
+            .tour-welcome {
+                max-width: 350px;
+                padding: 30px;
+            }
+        }
+        .resume-section {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .resume-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--highlight), var(--highlight-alt));
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+        }
+
+        .resume-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(100, 255, 218, 0.4);
+        }
+
+        .resume-btn i {
+            font-size: 20px;
         }
     </style>
 </head>
@@ -1138,6 +1565,50 @@
     <div class="cursor"></div>
     <div class="cursor-follower"></div>
     
+    <!-- Tour System -->
+    <div class="tour-overlay">
+        <div class="tour-backdrop"></div>
+        <div class="tour-spotlight"></div>
+    </div>
+    
+    <div class="tour-tooltip">
+        <div class="tour-header">
+            <div class="tour-step-indicator">1</div>
+            <h4 class="tour-title">Welcome!</h4>
+        </div>
+        <div class="tour-description">
+            This is the tour description that explains what this element does.
+        </div>
+        <div class="tour-controls">
+            <div class="tour-progress">
+                <div class="tour-dot active"></div>
+                <div class="tour-dot"></div>
+                <div class="tour-dot"></div>
+                <div class="tour-dot"></div>
+                <div class="tour-dot"></div>
+                <div class="tour-dot"></div>
+            </div>
+            <div>
+                <button class="tour-btn tour-btn-secondary">Skip Tour</button>
+                <button class="tour-btn tour-btn-primary">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tour-welcome">
+        <div class="tour-welcome-icon">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h2>Welcome to My Digital Universe!</h2>
+        <p>I'm thrilled you're here! Let me give you a guided tour of my portfolio to showcase my AI research, projects, and experiences. Ready for an interactive journey?</p>
+        <button class="tour-start-btn">Start Interactive Tour</button>
+        <button class="tour-skip-btn">Explore on Your Own</button>
+    </div>
+
+    <div class="tour-trigger">
+        <i class="fas fa-route"></i>
+    </div>
+        
     <!-- Loader -->
     <div class="loader-container">
         <div class="loader-logo">
@@ -1174,7 +1645,7 @@
     <div class="page-transition"></div>
     
     <!-- Ring Navigation -->
-    <div class="ring-nav-container">
+    <div class="ring-nav-container" id="tour-navigation">
         <div class="ring-nav">
             <div class="ring-nav-toggle">
                 <i class="fas fa-bars"></i>
@@ -1210,11 +1681,11 @@
         <section id="home" class="page active">
             <div class="home">
                 <canvas class="home-bg"></canvas>
-                <h1>Hi, my name is</h1>
-                <h2>Ram Charan Teja N L.</h2>
-                <h3>I build things for the web.</h3>
-                <p>I'm an aspiring Software Development Engineer and Computer Science Student with experience in artificial intelligence projects using Python. Currently focused on building accessible, human-centered products at Vemu Institute of Technology.</p>
-                <a href="#projects" class="cta-button">Check out my projects!</a>
+                <h1 id="tour-intro">Hi, my name is</h1>
+                <h2 id="tour-name">Ram Charan Teja N L.</h2>
+                <h3 id="tour-tagline">I build intelligent solutions.</h3>
+                <p id="tour-description">I'm a Computer Science undergraduate passionate about AI research and software development. Currently exploring explainable AI, neuro-symbolic systems, and privacy in neural networks through multiple research internships at top institutions like NIT Jaipur and IEEE CIS.</p>
+                <a href="#projects" class="cta-button" id="tour-cta">Explore my research & projects</a>
             </div>
         </section>
         
@@ -1223,68 +1694,79 @@
             <h2 class="section-title about">About Me</h2>
             <div class="about-container">
                 <div class="about-text">
-                    <p>Hello! I'm Ram Charan, a Computer Science student passionate about software development and artificial intelligence. My journey in tech began with Python programming and has evolved to include various technologies and frameworks.</p>
-                    <p>I've had the opportunity to work on AI projects during my internship at Skill Forge, where I developed hands-on experience with real-time projects. I'm also interned at e-Yantra (IIT Bombay), working on a project focused on Quality Education aligned with UN SDGs.</p>
+                    <p>I'm Ram Charan Teja, a Computer Science student at Vemu Institute of Technology with a deep passion for AI research and software development. My journey has been focused on exploring the intersection of artificial intelligence and real-world applications.</p>
+                    <p>Currently, I'm engaged in cutting-edge research through multiple internships at prestigious institutions including NIT Jaipur and IEEE CIS Kolkata. My research focuses on privacy vulnerabilities in neural networks, explainable AI systems, and neuro-symbolic approaches to medical diagnosis.</p>
+                    <p>Beyond research, I'm also building StudentSmart, a campus networking platform as a Tech Lead, demonstrating my ability to translate academic knowledge into practical solutions.</p>
                     
-                    <div class="skills-container">
-                        <h3 class="skills-title">Technologies I've been working with:</h3>
+                    <div class="skills-container" id="tour-skills">
+                        <h3 class="skills-title">Technologies & Research Areas:</h3>
                         <div class="skills-grid">
                             <div class="skill-item">
                                 <i class="fab fa-python skill-icon"></i>
                                 <div class="skill-name">Python</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fab fa-java skill-icon"></i>
-                                <div class="skill-name">Java</div>
+                                <i class="fas fa-brain skill-icon"></i>
+                                <div class="skill-name">PyTorch</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fab fa-html5 skill-icon"></i>
-                                <div class="skill-name">HTML</div>
+                                <i class="fas fa-robot skill-icon"></i>
+                                <div class="skill-name">TensorFlow</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fab fa-css3-alt skill-icon"></i>
-                                <div class="skill-name">CSS</div>
+                                <i class="fas fa-chart-bar skill-icon"></i>
+                                <div class="skill-name">Scikit-learn</div>
+                            </div>
+                            <div class="skill-item">
+                                <i class="fas fa-network-wired skill-icon"></i>
+                                <div class="skill-name">Neural Networks</div>
+                            </div>
+                            <div class="skill-item">
+                                <i class="fas fa-shield-alt skill-icon"></i>
+                                <div class="skill-name">Privacy in AI</div>
+                            </div>
+                            <div class="skill-item">
+                                <i class="fas fa-search skill-icon"></i>
+                                <div class="skill-name">Explainable AI</div>
+                            </div>
+                            <div class="skill-item">
+                                <i class="fas fa-dna skill-icon"></i>
+                                <div class="skill-name">Genetic Algorithms</div>
                             </div>
                             <div class="skill-item">
                                 <i class="fab fa-js skill-icon"></i>
                                 <div class="skill-name">JavaScript</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fas fa-microchip skill-icon"></i>
-                                <div class="skill-name">FLask</div>
-                            </div>
-                            <div class="skill-item">
-                                <i class="fab fa-react skill-icon"></i>
-                                <div class="skill-name">Django</div>
-                            </div>
-                            <div class="skill-item">
-                                <i class="fas fa-brain skill-icon"></i>
-                                <div class="skill-name">TensorFlow</div>
-                            </div>
-                            <div class="skill-item">
-                                <i class="fas fa-robot skill-icon"></i>
-                                <div class="skill-name">Keras</div>
+                                <i class="fas fa-flask skill-icon"></i>
+                                <div class="skill-name">Flask</div>
                             </div>
                             <div class="skill-item">
                                 <i class="fas fa-database skill-icon"></i>
                                 <div class="skill-name">SQL</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fab fa-github skill-icon"></i>
-                                <div class="skill-name">Git/GitHub</div>
+                                <i class="fab fa-git-alt skill-icon"></i>
+                                <div class="skill-name">Git</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fas fa-cogs skill-icon"></i>
-                                <div class="skill-name">Machine Learning</div>
+                                <i class="fas fa-heartbeat skill-icon"></i>
+                                <div class="skill-name">Medical AI</div>
                             </div>
                             <div class="skill-item">
-                                <i class="fas fa-microchip skill-icon"></i>
-                                <div class="skill-name">AI</div>
+                                <i class="fas fa-language skill-icon"></i>
+                                <div class="skill-name">NLP</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="profile-pic">
+                <div class="resume-section">
+                    <a href="https://drive.google.com/file/d/1_8JEq9ExPBNBa83bF2ZrZyV4BCYStDvy/view?usp=sharing" target="_blank" class="resume-btn">
+                        <i class="fas fa-file-pdf"></i>
+                        View My Resume
+                    </a>
+                </div>
+                <div class="profile-pic" id="tour-profile">
                     <div class="profile-wrapper">
                         <img src="https://i.ibb.co/7xwYRSmz/ram30.jpg" alt="Ram Charan Teja" class="profile-img">
                     </div>
@@ -1293,65 +1775,79 @@
         </section>
         
         <!-- Experience Page -->
-        <!-- In the Experience section, update the tabs and content as follows: -->
         <section id="experience" class="page">
-            <h2 class="section-title experience">Where I've Worked</h2>
-            <div class="experience-container">
+            <h2 class="section-title experience">Where I've Worked & Researched</h2>
+            <div class="experience-container" id="tour-experience">
                 <div class="tabs">
-                    <button class="tab-button active" data-tab="nitjaipur">NIT Jaipur</button>
-                    <button class="tab-button" data-tab="ieee">IEEE CIS</button>
+                    <button class="tab-button active" data-tab="studentsmart">StudentSmart</button>
+                    <button class="tab-button" data-tab="nitjaipur">NIT Jaipur</button>
+                    <button class="tab-button" data-tab="ieeecis">IEEE CIS</button>
                     <button class="tab-button" data-tab="eyantra">e-Yantra</button>
                     <button class="tab-button" data-tab="skillforge">Skill Forge</button>
                 </div>
                 <div class="tab-content">
-                    <div class="job-panel active" id="nitjaipur">
-                        <h3 class="job-title">Research Intern</h3>
-                        <div class="job-company">National Institute of Technology, Jaipur</div>
-                        <div class="job-duration">June 2024 - Present</div>
+                    <div class="job-panel active" id="studentsmart">
+                        <h3 class="job-title">Tech Lead & Full-Stack Developer</h3>
+                        <div class="job-company">StudentSmart Startup</div>
+                        <div class="job-duration">February 2025 - Present</div>
                         <div class="job-description">
                             <ul>
-                                <li>Currently interning in the field of Advanced Machine Learning and Data Analytics.</li>
-                                <li>Working on a research project titled "Membership Inference Attack on Advanced Neural Networks".</li>
-                                <li>Investigating privacy vulnerabilities in deep learning models and developing defense mechanisms.</li>
-                                <li>Implementing state-of-the-art attack methodologies and evaluating model robustness.</li>
+                                <li>Leading end-to-end development of StudentSmart, a campus-based networking platform designed for college students to connect, communicate, and collaborate.</li>
+                                <li>Independently architected and built the entire web application using Flask, SQL, HTML, CSS, and JavaScript, managing both frontend and backend development.</li>
+                                <li>Received early-stage support and product mentorship from Mentorly, focusing on user experience optimization and market readiness.</li>
+                                <li>Currently in pre-launch phase after completing internal testing, demonstrating strong startup leadership and product ownership skills.</li>
                             </ul>
                         </div>
                     </div>
-                    <div class="job-panel" id="ieee">
-                        <h3 class="job-title">Research Intern</h3>
-                        <div class="job-company">IEEE Computational Intelligence Society, Kolkata</div>
-                        <div class="job-duration">May 2024 - Present</div>
+                    <div class="job-panel" id="nitjaipur">
+                        <h3 class="job-title">Research Intern - AI Privacy & Security</h3>
+                        <div class="job-company">National Institute of Technology, Jaipur</div>
+                        <div class="job-duration">May 2025 - July 2025</div>
                         <div class="job-description">
                             <ul>
-                                <li>Currently working on an innovative research project titled "Neuro-Symbolic Evolutionary System for Explainable Medical Diagnosis".</li>
-                                <li>Developing hybrid AI systems that combine neural networks with symbolic reasoning for medical applications.</li>
-                                <li>Focusing on creating interpretable and explainable AI models for healthcare decision support.</li>
-                                <li>Implementing evolutionary algorithms to optimize model architectures and parameters.</li>
+                                <li>Conducted research on privacy vulnerabilities in Spiking Neural Networks (SNNs) using Membership Inference Attacks to quantify data leakage risks in LLM training datasets.</li>
+                                <li>Designed and implemented a comprehensive Python-based MIA framework using PyTorch, scikit-learn, and HuggingFace Datasets.</li>
+                                <li>Achieved 70% attack accuracy on unsecured SNNs, demonstrating significant privacy vulnerabilities in neuromorphic AI systems.</li>
+                                <li>Developed custom spike encoders (rate/temporal encoding) and STDP-inspired attention mechanisms to analyze model susceptibility.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="job-panel" id="ieeecis">
+                        <h3 class="job-title">Research Intern - Neuro-Symbolic AI</h3>
+                        <div class="job-company">IEEE Computational Intelligence Society, Kolkata</div>
+                        <div class="job-duration">June 2025 - July 2025</div>
+                        <div class="job-description">
+                            <ul>
+                                <li>Contributing to the development of a Neuro-Symbolic Evolutionary System integrating shallow neural networks with symbolic IF-THEN rules for interpretable medical diagnosis.</li>
+                                <li>Implemented hybrid diagnostic models using evolutionary algorithms (Genetic Programming) on public health datasets including UCI Diabetes and Heart Disease.</li>
+                                <li>Enhanced model interpretability using SHAP values and IF-THEN rule extraction, enabling transparent clinical decision-making processes.</li>
+                                <li>Utilized advanced tools including DEAP, PyTorch, and SHAP to build transparent diagnostic models for healthcare applications.</li>
                             </ul>
                         </div>
                     </div>
                     <div class="job-panel" id="eyantra">
-                        <h3 class="job-title">Intern</h3>
+                        <h3 class="job-title">Innovation Fellow</h3>
                         <div class="job-company">e-Yantra (IIT Bombay)</div>
                         <div class="job-duration">October 2024 - April 2025</div>
                         <div class="job-description">
                             <ul>
-                                <li>Participated in the e-Yantra Innovation Challenge 2024-25, developing a project focused on Quality Education aligned with UN SDGs.</li>
-                                <li>Attended an Ideation Workshop, completed an Innovation and Entrepreneurship MOOC, and received technical and entrepreneurial mentorship.</li>
-                                <li>Collaborated in a multi-disciplinary team, strengthening skills in teamwork, problem-solving, and resilience.</li>
+                                <li>Participated in the e-Yantra Innovation Challenge 2024-25, developing AI-powered solutions focused on Quality Education aligned with UN SDGs.</li>
+                                <li>Completed comprehensive Innovation and Entrepreneurship MOOC and received technical mentorship from IIT Bombay faculty.</li>
+                                <li>Developed an AI-powered Resume & Job Matching System that secured 2nd place in the challenge, demonstrating innovation in recruitment technology.</li>
+                                <li>Strengthened skills in multidisciplinary teamwork, problem-solving, and resilience through intensive collaborative project work.</li>
                             </ul>
                         </div>
                     </div>
                     <div class="job-panel" id="skillforge">
-                        <h3 class="job-title">Intern</h3>
+                        <h3 class="job-title">AI Development Intern</h3>
                         <div class="job-company">Skill Forge</div>
                         <div class="job-duration">August 2023 - October 2023</div>
                         <div class="job-description">
                             <ul>
-                                <li>Participated in an online internship program focused on Artificial Intelligence with Python.</li>
-                                <li>Gained hands-on experience through a comprehensive curriculum that included real-time project work.</li>
-                                <li>Developed capabilities in AI program ideation and implementation.</li>
-                                <li>Collaborated on projects that integrated coding and testing activities.</li>
+                                <li>Participated in a comprehensive online internship program focused on Artificial Intelligence with Python programming.</li>
+                                <li>Gained practical experience through real-time project implementation, including feature extraction from images and ML model development.</li>
+                                <li>Developed foundational skills in AI program ideation, implementation, and testing methodologies.</li>
+                                <li>Collaborated on projects integrating coding best practices with AI development workflows.</li>
                             </ul>
                         </div>
                     </div>
@@ -1361,77 +1857,119 @@
         
         <!-- Projects Page -->
         <section id="projects" class="page">
-            <h2 class="section-title projects">Some Things I've Built</h2>
-            <div class="projects-grid">
+            <h2 class="section-title projects">Research Projects & Applications</h2>
+            <div class="projects-grid" id="tour-projects">
                 <div class="project-card">
                     <div class="project-top">
-                        <i class="folder-icon fas fa-folder"></i>
+                        <i class="folder-icon fas fa-shield-alt"></i>
                         <div class="project-links">
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fas fa-external-link-alt"></i></a>
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fab fa-github"></i></a>
                         </div>
                     </div>
-                    <h3 class="project-title">Feature Extraction From Images</h3>
-                    <p class="project-description">Developed a feature extraction system from images using Python, identifying and isolating key attributes such as edges and shapes using libraries like OpenCV and Scikit-image. Transformed image data into numerical vectors for machine learning models.</p>
+                    <h3 class="project-title">Membership Inference Attack on Advanced Neural Networks</h3>
+                    <p class="project-description">Developed a comprehensive framework to investigate privacy vulnerabilities in Spiking Neural Networks using Membership Inference Attacks. Achieved >50% privacy leakage detection in baseline SNNs, highlighting critical security concerns in neuromorphic AI systems.</p>
                     <div class="project-tech">
+                        <span>PyTorch</span>
                         <span>Python</span>
-                        <span>OpenCV</span>
-                        <span>Scikit-image</span>
-                        <span>Machine Learning</span>
+                        <span>Scikit-learn</span>
+                        <span>HuggingFace</span>
+                        <span>Privacy Research</span>
                     </div>
                 </div>
                 
                 <div class="project-card">
                     <div class="project-top">
-                        <i class="folder-icon fas fa-folder"></i>
+                        <i class="folder-icon fas fa-brain"></i>
                         <div class="project-links">
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fas fa-external-link-alt"></i></a>
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fab fa-github"></i></a>
                         </div>
                     </div>
-                    <h3 class="project-title">Credit Card Behaviour Score</h3>
-                    <p class="project-description">Developed a credit card default risk prediction model using ML techniques on 96,806 customer records. Engineered key financial features and evaluated the model on 41,792 validation records. Cleared 2 rounds in IIT Guwahati Hackathon.</p>
+                    <h3 class="project-title">Neuro-Symbolic System for Medical Diagnosis</h3>
+                    <p class="project-description">Designed a hybrid neural-symbolic model combining shallow neural networks with decision trees for interpretable medical diagnosis. Optimized using genetic algorithms and implemented SHAP analysis for transparent clinical decision-making.</p>
                     <div class="project-tech">
-                        <span>Python</span>
-                        <span>Machine Learning</span>
-                        <span>Data Analysis</span>
-                        <span>Risk Modeling</span>
+                        <span>PyTorch</span>
+                        <span>DEAP</span>
+                        <span>SHAP</span>
+                        <span>Medical AI</span>
+                        <span>Explainable AI</span>
                     </div>
                 </div>
                 
                 <div class="project-card">
                     <div class="project-top">
-                        <i class="folder-icon fas fa-folder"></i>
+                        <i class="folder-icon fas fa-users"></i>
                         <div class="project-links">
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fas fa-external-link-alt"></i></a>
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fab fa-github"></i></a>
                         </div>
                     </div>
-                    <h3 class="project-title">Resume Ranking using NLP</h3>
-                    <p class="project-description">Developed a Resume Ranking System using NLP techniques like TF-IDF and word embeddings to automate resume screening. Implemented machine learning algorithms to rank resumes based on job relevance, optimizing the process for large-scale data.</p>
+                    <h3 class="project-title">StudentSmart - Campus Networking Platform</h3>
+                    <p class="project-description">Full-stack campus networking platform enabling students to connect, communicate, and collaborate. Built entire application architecture from system design to deployment, currently in pre-launch phase with mentorship support.</p>
                     <div class="project-tech">
-                        <span>Python</span>
-                        <span>NLP</span>
-                        <span>TF-IDF</span>
-                        <span>Machine Learning</span>
+                        <span>Flask</span>
+                        <span>SQL</span>
+                        <span>JavaScript</span>
+                        <span>HTML/CSS</span>
+                        <span>Startup</span>
                     </div>
                 </div>
                 
                 <div class="project-card">
                     <div class="project-top">
-                        <i class="folder-icon fas fa-folder"></i>
+                        <i class="folder-icon fas fa-robot"></i>
                         <div class="project-links">
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fas fa-external-link-alt"></i></a>
                             <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fab fa-github"></i></a>
                         </div>
                     </div>
                     <h3 class="project-title">AI-powered Resume & Job Matching System</h3>
-                    <p class="project-description">Developed an AI-powered Resume & Job Matching System using NLP and machine learning, aligned with SDG 8 & SDG 4. Advanced through three rounds and pitched to judges from Microsoft, Reskill, and CTS. Secured 2nd place.</p>
+                    <p class="project-description">Developed an intelligent recruitment system using NLP and machine learning aligned with UN SDGs 4 & 8. Secured 2nd place at e-Yantra challenge, pitched to judges from Microsoft, Reskill, and CTS, demonstrating innovation in AI-driven recruitment.</p>
                     <div class="project-tech">
-                        <span>Python</span>
                         <span>NLP</span>
-                        <span>AI</span>
                         <span>Machine Learning</span>
+                        <span>Python</span>
+                        <span>SDG Impact</span>
+                        <span>Award Winner</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <div class="project-top">
+                        <i class="folder-icon fas fa-credit-card"></i>
+                        <div class="project-links">
+                            <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+                            <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3 class="project-title">Credit Card Default Risk Prediction</h3>
+                    <p class="project-description">Developed ML-based risk prediction model analyzing 96,806 customer records with validation on 41,792 records. Cleared 2 rounds in IIT Guwahati Hackathon, demonstrating expertise in financial risk modeling and predictive analytics.</p>
+                    <div class="project-tech">
+                        <span>Machine Learning</span>
+                        <span>Risk Analysis</span>
+                        <span>Python</span>
+                        <span>Financial Modeling</span>
+                        <span>Hackathon</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <div class="project-top">
+                        <i class="folder-icon fas fa-search"></i>
+                        <div class="project-links">
+                            <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fas fa-external-link-alt"></i></a>
+                            <a href="https://github.com/RamCharanTeja-22" target="_blank"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3 class="project-title">Resume Ranking using NLP</h3>
+                    <p class="project-description">Automated resume screening system using advanced NLP techniques including TF-IDF and word embeddings. Implemented machine learning algorithms to rank resumes based on job relevance, optimizing recruitment processes for large-scale data.</p>
+                    <div class="project-tech">
+                        <span>NLP</span>
+                        <span>TF-IDF</span>
+                        <span>Python</span>
+                        <span>ML Algorithms</span>
+                        <span>Automation</span>
                     </div>
                 </div>
             </div>
@@ -1440,9 +1978,9 @@
         <!-- Contact Page -->
         <section id="contact" class="page">
             <h2 class="section-title contact">Get In Touch</h2>
-            <div class="contact">
-                <h3>Let's Build Something Together</h3>
-                <p>I'm currently looking for new opportunities. Whether you have a question or just want to say hi, I'll try my best to get back to you!</p>
+            <div class="contact" id="tour-contact">
+                <h3>Let's Collaborate on Something Amazing</h3>
+                <p>I'm actively seeking opportunities in AI research, software development roles at top-tier companies, and collaboration on innovative projects. Whether you're interested in discussing research, exploring potential opportunities, or just want to connect, I'd love to hear from you!</p>
                 <form class="contact-form">
                     <div class="form-group">
                         <input type="text" id="name" placeholder=" ">
@@ -1463,125 +2001,501 @@
     </div>
     
     <!-- Social Links -->
-    <div class="social-links">
-        <a href="https://www.linkedin.com/in/n-l-ram-charan-teja-ba2b25288/" class="social-link"><i class="fab fa-linkedin-in"></i></a>
-        <a href="https://github.com/RamCharanTeja-22" class="social-link"><i class="fab fa-github"></i></a>
-        <a href="https://www.hackerrank.com/profile/ramcharancai22" class="social-link"><i class="fab fa-hackerrank"></i></a>
-        <a href="https://leetcode.com/u/N_L_R/" class="social-link"><i class="fas fa-code"></i></a>
+    <div class="social-links" id="tour-social">
+        <a href="https://www.linkedin.com/in/n-l-ram-charan-teja-ba2b25288/" class="social-link" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+        <a href="https://github.com/RamCharanTeja-22" class="social-link" target="_blank"><i class="fab fa-github"></i></a>
+        <a href="https://www.hackerrank.com/profile/ramcharancai22" class="social-link" target="_blank"><i class="fab fa-hackerrank"></i></a>
+        <a href="https://leetcode.com/u/N_L_R/" class="social-link" target="_blank"><i class="fas fa-code"></i></a>
     </div>
     
     <!-- Email Link -->
-    <a href="mailto:connecting.to.ram.charan@outlook.com" class="email-link">Connect With Me Lets Build innovative</a>
+    <a href="mailto:nlramcharanplacement@gmail.com" class="email-link">nlramcharanplacement@gmail.com</a>
     
-    <!-- Scripts -->
+    <!-- JavaScript -->
     <script>
+        // Fixed Tour System Configuration
+        const tourSteps = [
+            {
+                target: '#tour-navigation',
+                title: 'Smart Navigation Hub',
+                description: 'This floating navigation ring gives you instant access to all sections. Click the center to expand and explore different areas of my portfolio.',
+                position: 'left',
+                page: 'home'
+            },
+            {
+                target: '#tour-intro',
+                title: 'Personal Introduction',
+                description: 'Welcome! I\'m Ram Charan Teja, and this is where my story begins. Every journey starts with a simple introduction.',
+                position: 'bottom',
+                page: 'home'
+            },
+            {
+                target: '#tour-tagline',
+                title: 'My Mission Statement',
+                description: 'I build intelligent solutions that bridge the gap between cutting-edge AI research and real-world applications.',
+                position: 'bottom',
+                page: 'home'
+            },
+            {
+                target: '#tour-skills',
+                title: 'Technical Arsenal',
+                description: 'Explore my diverse skill set spanning AI research, machine learning, neural networks, and full-stack development. Each skill represents hours of dedicated learning and hands-on experience.',
+                position: 'top',
+                page: 'about'
+            },
+            {
+                target: '#tour-experience',
+                title: 'Professional Journey',
+                description: 'Discover my research internships at prestigious institutions like NIT Jaipur and IEEE CIS, plus my entrepreneurial venture with StudentSmart. Click through the tabs to explore each role.',
+                position: 'top',
+                page: 'experience'
+            },
+            {
+                target: '#tour-projects',
+                title: 'Innovation Showcase',
+                description: 'These projects represent the intersection of academic research and practical application. From privacy-preserving AI to neuro-symbolic systems, each project tells a story of innovation.',
+                position: 'top',
+                page: 'projects'
+            },
+            {
+                target: '#tour-contact',
+                title: 'Let\'s Connect!',
+                description: 'Ready to collaborate or discuss opportunities? I\'m always excited to connect with fellow researchers, developers, and innovators. Let\'s build something amazing together!',
+                position: 'top',
+                page: 'contact'
+            }
+        ];
+
+        class AdvancedTour {
+            constructor() {
+                this.currentStep = 0;
+                this.isActive = false;
+                this.elements = {
+                    overlay: document.querySelector('.tour-overlay'),
+                    backdrop: document.querySelector('.tour-backdrop'),
+                    spotlight: document.querySelector('.tour-spotlight'),
+                    tooltip: document.querySelector('.tour-tooltip'),
+                    welcome: document.querySelector('.tour-welcome'),
+                    trigger: document.querySelector('.tour-trigger')
+                };
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                // Show welcome after page loads
+                setTimeout(() => this.showWelcome(), 3000);
+            }
+
+            bindEvents() {
+                // Welcome modal buttons
+                document.querySelector('.tour-start-btn').addEventListener('click', () => {
+                    this.startTour();
+                });
+
+                document.querySelector('.tour-skip-btn').addEventListener('click', () => {
+                    this.skipTour();
+                });
+
+                // Tour control buttons
+                document.querySelector('.tour-btn-primary').addEventListener('click', () => {
+                    this.nextStep();
+                });
+
+                document.querySelector('.tour-btn-secondary').addEventListener('click', () => {
+                    this.endTour();
+                });
+
+                // Tour trigger button
+                this.elements.trigger.addEventListener('click', () => {
+                    this.restartTour();
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (!this.isActive) return;
+                    
+                    switch(e.key) {
+                        case 'ArrowRight':
+                        case ' ':
+                            e.preventDefault();
+                            this.nextStep();
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.prevStep();
+                            break;
+                        case 'Escape':
+                            e.preventDefault();
+                            this.endTour();
+                            break;
+                    }
+                });
+
+                // Close tour when clicking backdrop (but not spotlight area)
+                this.elements.backdrop.addEventListener('click', (e) => {
+                    this.endTour();
+                });
+            }
+
+            showWelcome() {
+                this.elements.welcome.classList.add('active');
+            }
+
+            startTour() {
+                this.elements.welcome.classList.remove('active');
+                setTimeout(() => {
+                    this.isActive = true;
+                    this.currentStep = 0;
+                    this.showStep();
+                }, 500);
+            }
+
+            restartTour() {
+                this.isActive = true;
+                this.currentStep = 0;
+                this.showStep();
+            }
+
+            skipTour() {
+                this.elements.welcome.classList.remove('active');
+                this.endTour();
+            }
+
+            showStep() {
+                const step = tourSteps[this.currentStep];
+                
+                // Navigate to the correct page first
+                if (step.page !== this.getCurrentPage()) {
+                    this.navigateToPage(step.page, () => {
+                        setTimeout(() => this.displayStep(step), 800);
+                    });
+                } else {
+                    this.displayStep(step);
+                }
+            }
+
+            displayStep(step) {
+                const target = document.querySelector(step.target);
+                if (!target) {
+                    console.warn(`Tour target not found: ${step.target}`);
+                    this.nextStep();
+                    return;
+                }
+
+                // Show overlay
+                this.elements.overlay.classList.add('active');
+
+                // Position spotlight and update backdrop
+                this.positionSpotlight(target);
+
+                // Position and show tooltip
+                this.positionTooltip(target, step);
+
+                // Update progress
+                this.updateProgress();
+
+                // Add highlight to target element
+                this.highlightElement(target);
+            }
+
+            positionSpotlight(target) {
+                const rect = target.getBoundingClientRect();
+                const spotlight = this.elements.spotlight;
+                const backdrop = this.elements.backdrop;
+                
+                // Make spotlight larger than the target
+                const padding = 30;
+                const size = Math.max(rect.width, rect.height, 150) + padding * 2;
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                // Position spotlight
+                spotlight.style.width = size + 'px';
+                spotlight.style.height = size + 'px';
+                spotlight.style.left = (centerX - size / 2) + 'px';
+                spotlight.style.top = (centerY - size / 2) + 'px';
+
+                // Update backdrop CSS custom properties for mask positioning
+                const spotlightXPercent = (centerX / window.innerWidth) * 100;
+                const spotlightYPercent = (centerY / window.innerHeight) * 100;
+                const spotlightSizePx = size / 2; // radius
+
+                backdrop.style.setProperty('--spotlight-x', spotlightXPercent + '%');
+                backdrop.style.setProperty('--spotlight-y', spotlightYPercent + '%');
+                backdrop.style.setProperty('--spotlight-size', spotlightSizePx + 'px');
+            }
+
+            positionTooltip(target, step) {
+                const rect = target.getBoundingClientRect();
+                const tooltip = this.elements.tooltip;
+                
+                // Update content first
+                tooltip.querySelector('.tour-step-indicator').textContent = this.currentStep + 1;
+                tooltip.querySelector('.tour-title').textContent = step.title;
+                tooltip.querySelector('.tour-description').textContent = step.description;
+                
+                // Show tooltip to get its dimensions
+                tooltip.classList.add('active');
+                const tooltipRect = tooltip.getBoundingClientRect();
+                
+                let left, top;
+                let position = step.position;
+
+                // Calculate position with better logic
+                switch(position) {
+                    case 'top':
+                        left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                        top = rect.top - tooltipRect.height - 20;
+                        break;
+                    case 'bottom':
+                        left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                        top = rect.bottom + 20;
+                        break;
+                    case 'left':
+                        left = rect.left - tooltipRect.width - 20;
+                        top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+                        break;
+                    case 'right':
+                        left = rect.right + 20;
+                        top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+                        break;
+                }
+
+                // Keep tooltip on screen with better bounds checking
+                const margin = 20;
+                left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+                top = Math.max(margin, Math.min(top, window.innerHeight - tooltipRect.height - margin));
+
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+                
+                // Remove previous position classes and add current
+                tooltip.classList.remove('top', 'bottom', 'left', 'right');
+                tooltip.classList.add(position);
+            }
+
+            updateProgress() {
+                const dots = document.querySelectorAll('.tour-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === this.currentStep);
+                });
+
+                // Update button text
+                const nextBtn = document.querySelector('.tour-btn-primary');
+                nextBtn.textContent = this.currentStep === tourSteps.length - 1 ? 'Finish' : 'Next';
+            }
+
+            highlightElement(target) {
+                // Remove previous highlights
+                document.querySelectorAll('.tour-highlight-element').forEach(el => {
+                    el.classList.remove('tour-highlight-element');
+                });
+
+                // Add highlight to current target
+                target.classList.add('tour-highlight-element');
+            }
+
+            nextStep() {
+                if (this.currentStep < tourSteps.length - 1) {
+                    this.currentStep++;
+                    this.showStep();
+                } else {
+                    this.endTour();
+                }
+            }
+
+            prevStep() {
+                if (this.currentStep > 0) {
+                    this.currentStep--;
+                    this.showStep();
+                }
+            }
+
+            endTour() {
+                this.isActive = false;
+                this.elements.overlay.classList.remove('active');
+                this.elements.tooltip.classList.remove('active');
+                
+                // Remove highlights
+                document.querySelectorAll('.tour-highlight-element').forEach(el => {
+                    el.classList.remove('tour-highlight-element');
+                });
+                
+                // Show completion message if tour was completed
+                if (this.currentStep === tourSteps.length - 1) {
+                    this.showCompletionMessage();
+                }
+            }
+
+            showCompletionMessage() {
+                const completion = document.createElement('div');
+                completion.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: linear-gradient(135deg, var(--secondary), #1e3a5f);
+                        border: 2px solid var(--tour-highlight);
+                        border-radius: 15px;
+                        padding: 30px;
+                        text-align: center;
+                        z-index: 10003;
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                        color: var(--text);
+                    ">
+                        <i class="fas fa-trophy" style="font-size: 48px; color: var(--tour-highlight); margin-bottom: 20px;"></i>
+                        <h3 style="color: var(--tour-highlight); margin-bottom: 15px;">Tour Complete!</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">Thanks for exploring my portfolio! Feel free to dive deeper into any section.</p>
+                        <button onclick="this.parentElement.parentElement.remove()" style="
+                            background: linear-gradient(135deg, var(--tour-highlight), #ffa500);
+                            color: var(--primary);
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Awesome!</button>
+                    </div>
+                `;
+                document.body.appendChild(completion);
+                
+                setTimeout(() => {
+                    if (completion.parentNode) {
+                        completion.style.opacity = '0';
+                        setTimeout(() => {
+                            if (completion.parentNode) {
+                                completion.parentNode.removeChild(completion);
+                            }
+                        }, 500);
+                    }
+                }, 4000);
+            }
+
+            navigateToPage(pageId, callback) {
+                navigateToPage(pageId);
+                if (callback) setTimeout(callback, 300);
+            }
+
+            getCurrentPage() {
+                const activePage = document.querySelector('.page.active');
+                return activePage ? activePage.id : 'home';
+            }
+        }
+
+        // Initialize tour system after page loads
+        let advancedTour;
+
         // Particles.js Configuration
         document.addEventListener('DOMContentLoaded', function() {
-            particlesJS('particles-js', {
-                "particles": {
-                    "number": {
-                        "value": 80,
-                        "density": {
-                            "enable": true,
-                            "value_area": 800
-                        }
-                    },
-                    "color": {
-                        "value": "#64ffda"
-                    },
-                    "shape": {
-                        "type": "circle",
-                        "stroke": {
-                            "width": 0,
-                            "color": "#000000"
-                        },
-                        "polygon": {
-                            "nb_sides": 5
-                        }
-                    },
-                    "opacity": {
-                        "value": 0.5,
-                        "random": false,
-                        "anim": {
-                            "enable": false,
-                            "speed": 1,
-                            "opacity_min": 0.1,
-                            "sync": false
-                        }
-                    },
-                    "size": {
-                        "value": 3,
-                        "random": true,
-                        "anim": {
-                            "enable": false,
-                            "speed": 40,
-                            "size_min": 0.1,
-                            "sync": false
-                        }
-                    },
-                    "line_linked": {
-                        "enable": true,
-                        "distance": 150,
-                        "color": "#64ffda",
-                        "opacity": 0.2,
-                        "width": 1
-                    },
-                    "move": {
-                        "enable": true,
-                        "speed": 2,
-                        "direction": "none",
-                        "random": false,
-                        "straight": false,
-                        "out_mode": "out",
-                        "bounce": false,
-                        "attract": {
-                            "enable": false,
-                            "rotateX": 600,
-                            "rotateY": 1200
-                        }
-                    }
-                },
-                "interactivity": {
-                    "detect_on": "canvas",
-                    "events": {
-                        "onhover": {
-                            "enable": true,
-                            "mode": "grab"
-                        },
-                        "onclick": {
-                            "enable": true,
-                            "mode": "push"
-                        },
-                        "resize": true
-                    },
-                    "modes": {
-                        "grab": {
-                            "distance": 140,
-                            "line_linked": {
-                                "opacity": 1
+            if (window.particlesJS) {
+                particlesJS('particles-js', {
+                    "particles": {
+                        "number": {
+                            "value": 80,
+                            "density": {
+                                "enable": true,
+                                "value_area": 800
                             }
                         },
-                        "bubble": {
-                            "distance": 400,
-                            "size": 40,
-                            "duration": 2,
-                            "opacity": 8,
-                            "speed": 3
+                        "color": {
+                            "value": "#64ffda"
                         },
-                        "repulse": {
-                            "distance": 200,
-                            "duration": 0.4
+                        "shape": {
+                            "type": "circle",
+                            "stroke": {
+                                "width": 0,
+                                "color": "#000000"
+                            },
+                            "polygon": {
+                                "nb_sides": 5
+                            }
                         },
-                        "push": {
-                            "particles_nb": 4
+                        "opacity": {
+                            "value": 0.5,
+                            "random": false,
+                            "anim": {
+                                "enable": false,
+                                "speed": 1,
+                                "opacity_min": 0.1,
+                                "sync": false
+                            }
                         },
-                        "remove": {
-                            "particles_nb": 2
+                        "size": {
+                            "value": 3,
+                            "random": true,
+                            "anim": {
+                                "enable": false,
+                                "speed": 40,
+                                "size_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "line_linked": {
+                            "enable": true,
+                            "distance": 150,
+                            "color": "#64ffda",
+                            "opacity": 0.2,
+                            "width": 1
+                        },
+                        "move": {
+                            "enable": true,
+                            "speed": 2,
+                            "direction": "none",
+                            "random": false,
+                            "straight": false,
+                            "out_mode": "out",
+                            "bounce": false,
+                            "attract": {
+                                "enable": false,
+                                "rotateX": 600,
+                                "rotateY": 1200
+                            }
                         }
-                    }
-                },
-                "retina_detect": true
-            });
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": {
+                            "onhover": {
+                                "enable": true,
+                                "mode": "grab"
+                            },
+                            "onclick": {
+                                "enable": true,
+                                "mode": "push"
+                            },
+                            "resize": true
+                        },
+                        "modes": {
+                            "grab": {
+                                "distance": 140,
+                                "line_linked": {
+                                    "opacity": 1
+                                }
+                            },
+                            "bubble": {
+                                "distance": 400,
+                                "size": 40,
+                                "duration": 2,
+                                "opacity": 8,
+                                "speed": 3
+                            },
+                            "repulse": {
+                                "distance": 200,
+                                "duration": 0.4
+                            },
+                            "push": {
+                                "particles_nb": 4
+                            },
+                            "remove": {
+                                "particles_nb": 2
+                            }
+                        }
+                    },
+                    "retina_detect": true
+                });
+            }
         });
         
         // Custom Cursor
@@ -1608,18 +2522,18 @@
             cursorFollower.style.transform = 'translate(-50%, -50%) scale(1)';
         });
         
-        // Add hover effect to all links and buttons
-        const links = document.querySelectorAll('a, button, .project-card, .skill-item');
+        // Add hover effect to all interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, .project-card, .skill-item, .ring-nav-toggle');
         
-        links.forEach(link => {
-            link.addEventListener('mouseenter', function() {
+        interactiveElements.forEach(element => {
+            element.addEventListener('mouseenter', function() {
                 cursor.style.transform = 'translate(-50%, -50%) scale(1.5)';
                 cursor.style.backgroundColor = 'rgba(100, 255, 218, 0.5)';
                 cursorFollower.style.width = '0';
                 cursorFollower.style.height = '0';
             });
             
-            link.addEventListener('mouseleave', function() {
+            element.addEventListener('mouseleave', function() {
                 cursor.style.transform = 'translate(-50%, -50%) scale(1)';
                 cursor.style.backgroundColor = 'rgba(100, 255, 218, 0.3)';
                 cursorFollower.style.width = '40px';
@@ -1633,6 +2547,8 @@
                 document.querySelector('.loader-container').style.opacity = '0';
                 setTimeout(function() {
                     document.querySelector('.loader-container').style.display = 'none';
+                    // Initialize tour after loader
+                    advancedTour = new AdvancedTour();
                 }, 500);
             }, 2500);
         });
@@ -1649,6 +2565,8 @@
         // Home Page Background Animation with Three.js
         function initThreeJsBackground() {
             const canvas = document.querySelector('.home-bg');
+            if (!canvas || !window.THREE) return;
+            
             const renderer = new THREE.WebGLRenderer({
                 canvas,
                 alpha: true
@@ -1717,7 +2635,8 @@
         function navigateToPage(targetId) {
             // Update active nav item
             ringNavItems.forEach(item => item.classList.remove('active'));
-            document.querySelector(`.ring-nav-item[href="#${targetId}"]`).classList.add('active');
+            const navItem = document.querySelector(`.ring-nav-item[href="#${targetId}"]`);
+            if (navItem) navItem.classList.add('active');
             
             // Start transition animation
             pageTransition.classList.add('active');
@@ -1731,19 +2650,21 @@
                 
                 // Show target page
                 const targetPage = document.getElementById(targetId);
-                targetPage.style.display = 'block';
-                
-                setTimeout(() => {
-                    targetPage.classList.add('active');
-                    
-                    // End transition animation
-                    pageTransition.classList.add('exit');
-                    pageTransition.classList.remove('active');
+                if (targetPage) {
+                    targetPage.style.display = 'block';
                     
                     setTimeout(() => {
-                        pageTransition.classList.remove('exit');
-                    }, 500);
-                }, 50);
+                        targetPage.classList.add('active');
+                        
+                        // End transition animation
+                        pageTransition.classList.add('exit');
+                        pageTransition.classList.remove('active');
+                        
+                        setTimeout(() => {
+                            pageTransition.classList.remove('exit');
+                        }, 500);
+                    }, 50);
+                }
             }, 500);
             
             // Close ring nav if open
@@ -1781,7 +2702,10 @@
                 
                 // Show corresponding panel
                 const tabId = this.getAttribute('data-tab');
-                document.getElementById(tabId).classList.add('active');
+                const panel = document.getElementById(tabId);
+                if (panel) {
+                    panel.classList.add('active');
+                }
             });
         });
         
@@ -1803,21 +2727,23 @@
         // Form submission (prevent default for demo)
         const contactForm = document.querySelector('.contact-form');
         
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Animate button
-            const submitBtn = this.querySelector('.submit-btn');
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
-            submitBtn.style.backgroundColor = '#4CAF50';
-            
-            // Reset form
-            setTimeout(() => {
-                this.reset();
-                submitBtn.innerHTML = 'Send Message';
-                submitBtn.style.backgroundColor = '';
-            }, 3000);
-        });
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Animate button
+                const submitBtn = this.querySelector('.submit-btn');
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
+                submitBtn.style.backgroundColor = '#4CAF50';
+                
+                // Reset form
+                setTimeout(() => {
+                    this.reset();
+                    submitBtn.innerHTML = 'Send Message';
+                    submitBtn.style.backgroundColor = '';
+                }, 3000);
+            });
+        }
         
         // Initialize page based on hash
         function initPageFromHash() {
@@ -1826,11 +2752,12 @@
         }
         
         // Initialize page on load and hash change
-        window.addEventListener('load', initPageFromHash);
         window.addEventListener('hashchange', initPageFromHash);
         
-        // GSAP Animations for scroll effects
+        // GSAP Animations for scroll effects (if GSAP is loaded)
         function initGSAPAnimations() {
+            if (!window.gsap || !window.ScrollTrigger) return;
+            
             // Register ScrollTrigger plugin
             gsap.registerPlugin(ScrollTrigger);
             
@@ -1884,7 +2811,8 @@
                 duration: 0.8,
                 stagger: 0.2
             });
-                        // Contact page animations
+            
+            // Contact page animations
             gsap.from('.contact h3', {
                 scrollTrigger: {
                     trigger: '.contact',
@@ -1933,15 +2861,15 @@
             });
         }
         
-        // Initialize GSAP animations
+        // Initialize GSAP animations after load
         window.addEventListener('load', function() {
-            setTimeout(initGSAPAnimations, 3000); // Initialize after page load animations
+            setTimeout(initGSAPAnimations, 3000);
         });
         
         // Add 3D tilt effect to project cards
-        const projectCards = document.querySelectorAll('.project-card');
+        const hoverCards = document.querySelectorAll('.project-card');
         
-        projectCards.forEach(card => {
+        hoverCards.forEach(card => {
             card.addEventListener('mousemove', function(e) {
                 const rect = this.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -1960,433 +2888,54 @@
                     ${-rotateY/2}px ${rotateX/2}px 20px rgba(0, 0, 0, 0.2),
                     ${-rotateY}px ${rotateX}px 30px rgba(0, 0, 0, 0.1)
                 `;
-                
-                // Highlight effect
-                const highlight = `radial-gradient(circle at ${xPercent*100}% ${yPercent*100}%, rgba(100, 255, 218, 0.1), transparent)`;
-                this.style.backgroundImage = highlight;
             });
             
             card.addEventListener('mouseleave', function() {
                 this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
                 this.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)';
-                this.style.backgroundImage = 'none';
             });
         });
-        
-        // Add typing effect to home page
-        function typeWriter(element, text, speed, delay = 0) {
-            let i = 0;
-            element.textContent = '';
-            
-            setTimeout(() => {
-                const typing = setInterval(() => {
-                    if (i < text.length) {
-                        element.textContent += text.charAt(i);
-                        i++;
-                    } else {
-                        clearInterval(typing);
-                    }
-                }, speed);
-            }, delay);
-        }
-        
-        // Initialize typing effect after page load
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                const homeTitle = document.querySelector('.home h1');
-                const originalText = homeTitle.textContent;
-                typeWriter(homeTitle, originalText, 100, 2500);
-            }, 500);
-        });
-        
-        // Add scroll indicator
-        const scrollIndicator = document.createElement('div');
-        scrollIndicator.classList.add('scroll-indicator');
-        scrollIndicator.innerHTML = '<i class="fas fa-chevron-down"></i>';
-        document.querySelector('.home').appendChild(scrollIndicator);
-        
-        // Style the scroll indicator
-        const style = document.createElement('style');
-        style.textContent = `
-            .scroll-indicator {
-                position: absolute;
-                bottom: 30px;
-                left: 50%;
-                transform: translateX(-50%);
-                color: var(--highlight);
-                font-size: 24px;
-                animation: bounce 2s infinite;
-                opacity: 0;
-                animation-delay: 3.5s;
-            }
-            
-            @keyframes bounce {
-                0%, 20%, 50%, 80%, 100% {
-                    transform: translateY(0) translateX(-50%);
-                }
-                40% {
-                    transform: translateY(-20px) translateX(-50%);
-                }
-                60% {
-                    transform: translateY(-10px) translateX(-50%);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Add scroll to top button
-        const scrollTopBtn = document.createElement('div');
-        scrollTopBtn.classList.add('scroll-top-btn');
-        scrollTopBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-        document.body.appendChild(scrollTopBtn);
-        
-        // Style the scroll to top button
-        const scrollTopStyle = document.createElement('style');
-        scrollTopStyle.textContent = `
-            .scroll-top-btn {
-                position: fixed;
-                bottom: 30px;
-                left: 30px;
-                width: 50px;
-                height: 50px;
-                background-color: var(--highlight);
-                color: var(--primary);
-                border-radius: 50%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                cursor: pointer;
-                opacity: 0;
-                transform: translateY(20px);
-                transition: all 0.3s ease;
-                z-index: 99;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            }
-            
-            .scroll-top-btn.visible {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            
-            .scroll-top-btn:hover {
-                transform: translateY(-5px);
-            }
-        `;
-        document.head.appendChild(scrollTopStyle);
-        
-        // Show/hide scroll to top button
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 300) {
-                scrollTopBtn.classList.add('visible');
+
+        // Error handling for missing elements
+        function safeAddEventListener(selector, event, handler) {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.addEventListener(event, handler);
             } else {
-                scrollTopBtn.classList.remove('visible');
+                console.warn(`Element not found: ${selector}`);
             }
-        });
-        
-        // Scroll to top when button is clicked
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-        
-        // Add page progress indicator
-        const progressBar = document.createElement('div');
-        progressBar.classList.add('progress-bar');
-        document.body.appendChild(progressBar);
-        
-        // Style the progress bar
-        const progressStyle = document.createElement('style');
-        progressStyle.textContent = `
-            .progress-bar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 3px;
-                background: linear-gradient(to right, var(--highlight), var(--highlight-alt));
-                width: 0%;
-                z-index: 9999;
-                transition: width 0.2s ease;
-            }
-        `;
-        document.head.appendChild(progressStyle);
-        
-        // Update progress bar on scroll
-        window.addEventListener('scroll', function() {
-            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrollPercent = (scrollTop / scrollHeight) * 100;
-            progressBar.style.width = scrollPercent + '%';
-        });
-        
-        // Add hover effect to section titles
-        const sectionTitles = document.querySelectorAll('.section-title');
-        
-        sectionTitles.forEach(title => {
-            title.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateX(10px)';
-                this.style.color = 'var(--highlight)';
-            });
-            
-            title.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateX(0)';
-                this.style.color = '';
-            });
-        });
-        
-        // Add notification system
-        const notificationSystem = document.createElement('div');
-        notificationSystem.classList.add('notification-system');
-        document.body.appendChild(notificationSystem);
-        
-        // Style the notification system
-        const notificationStyle = document.createElement('style');
-        notificationStyle.textContent = `
-            .notification-system {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                max-width: 300px;
-            }
-            
-            .notification {
-                background-color: var(--secondary);
-                color: var(--text);
-                padding: 15px;
-                border-radius: 5px;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                transform: translateX(120%);
-                transition: transform 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            
-            .notification.show {
-                transform: translateX(0);
-            }
-            
-            .notification-icon {
-                color: var(--highlight);
-                font-size: 20px;
-            }
-            
-            .notification-message {
-                flex: 1;
-            }
-            
-            .notification-close {
-                color: var(--text-secondary);
-                cursor: pointer;
-                font-size: 16px;
-                transition: all 0.3s ease;
-            }
-            
-            .notification-close:hover {
-                color: var(--highlight);
-                transform: scale(1.2);
-            }
-        `;
-        document.head.appendChild(notificationStyle);
-        
-        // Function to show notifications
-        function showNotification(message, type = 'info', duration = 3000) {
-            const notification = document.createElement('div');
-            notification.classList.add('notification');
-            
-            let icon;
-            switch (type) {
-                case 'success':
-                    icon = 'fa-check-circle';
-                    break;
-                case 'error':
-                    icon = 'fa-exclamation-circle';
-                    break;
-                case 'warning':
-                    icon = 'fa-exclamation-triangle';
-                    break;
-                default:
-                    icon = 'fa-info-circle';
-            }
-            
-            notification.innerHTML = `
-                <div class="notification-icon"><i class="fas ${icon}"></i></div>
-                <div class="notification-message">${message}</div>
-                <div class="notification-close"><i class="fas fa-times"></i></div>
-            `;
-            
-            notificationSystem.appendChild(notification);
-            
-            // Show notification with a slight delay
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 10);
-            
-            // Auto-remove notification after duration
-            const timeout = setTimeout(() => {
-                removeNotification(notification);
-            }, duration);
-            
-            // Close button functionality
-            notification.querySelector('.notification-close').addEventListener('click', function() {
-                clearTimeout(timeout);
-                removeNotification(notification);
-            });
         }
-        
-        // Function to remove notification with animation
-        function removeNotification(notification) {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }
-        
-        // Show welcome notification after page load
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                showNotification('Welcome to my portfolio! Feel free to explore.', 'success', 5000);
-            }, 3000);
-        });
-        
-        // Add easter egg
-        const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-        let konamiIndex = 0;
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.key === konamiCode[konamiIndex]) {
-                konamiIndex++;
-                
-                if (konamiIndex === konamiCode.length) {
-                    activateEasterEgg();
-                    konamiIndex = 0;
-                }
-            } else {
-                konamiIndex = 0;
-            }
-        });
-        
-        function activateEasterEgg() {
-            // Create matrix-like effect
-            const canvas = document.createElement('canvas');
-            canvas.classList.add('matrix-canvas');
-            document.body.appendChild(canvas);
-            
-            const style = document.createElement('style');
-            style.textContent = `
-                .matrix-canvas {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    z-index: 9997;
-                    background-color: rgba(0, 0, 0, 0.9);
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // Matrix effect
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            const fontSize = 14;
-            const columns = canvas.width / fontSize;
-            
-            const drops = [];
-            for (let i = 0; i < columns; i++) {
-                drops[i] = 1;
-            }
-            
-            function drawMatrix() {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                ctx.fillStyle = '#64ffda';
-                ctx.font = fontSize + 'px monospace';
-                
-                for (let i = 0; i < drops.length; i++) {
-                    const text = characters.charAt(Math.floor(Math.random() * characters.length));
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    
-                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                        drops[i] = 0;
+
+        // Improved error handling and fallbacks
+        window.addEventListener('error', function(e) {
+            console.warn('JavaScript error:', e.error);
+            // Fallback: ensure basic navigation still works
+            const navLinks = document.querySelectorAll('.ring-nav-item');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetPage = document.getElementById(targetId);
+                    if (targetPage) {
+                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                        targetPage.classList.add('active');
                     }
-                    
-                    drops[i]++;
-                }
-            }
-            
-            const matrixInterval = setInterval(drawMatrix, 33);
-            
-            // Show message
-            const message = document.createElement('div');
-            message.classList.add('easter-egg-message');
-            message.innerHTML = `
-                <h2>You found the secret!</h2>
-                <p>Thanks for checking out my portfolio in detail.</p>
-                <button class="close-easter-egg">Close</button>
-            `;
-            document.body.appendChild(message);
-            
-            const messageStyle = document.createElement('style');
-            messageStyle.textContent = `
-                .easter-egg-message {
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background-color: var(--secondary);
-                    padding: 30px;
-                    border-radius: 10px;
-                    text-align: center;
-                    z-index: 9998;
-                    box-shadow: 0 0 30px rgba(100, 255, 218, 0.5);
-                }
-                
-                .easter-egg-message h2 {
-                    color: var(--highlight);
-                    margin-bottom: 20px;
-                }
-                
-                .easter-egg-message p {
-                    color: var(--text);
-                    margin-bottom: 30px;
-                }
-                
-                .close-easter-egg {
-                    padding: 10px 20px;
-                    background-color: var(--highlight);
-                    color: var(--primary);
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    transition: all 0.3s ease;
-                }
-                
-                .close-easter-egg:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                }
-            `;
-            document.head.appendChild(messageStyle);
-            
-            // Close easter egg
-            document.querySelector('.close-easter-egg').addEventListener('click', function() {
-                clearInterval(matrixInterval);
-                canvas.remove();
-                message.remove();
-                showNotification('Easter egg deactivated!', 'info', 3000);
+                });
             });
-        }
+        });
+
+        // Initialize basic functionality immediately (fallback)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure at least basic page navigation works
+            const navLinks = document.querySelectorAll('.ring-nav-item');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    navigateToPage(targetId);
+                });
+            });
+        });
     </script>
 </body>
 </html>
